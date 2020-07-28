@@ -57,12 +57,14 @@
 
     struct load_command *lc = (struct load_command *)(header + 1);
     for (uint32_t i = 0; i < header->ncmds; i++) {
-        if (lc->cmd == LC_SEGMENT_64) {
-            struct segment_command_64 *seg = (struct segment_command_64 *)lc;
-            if (!strcmp(seg->segname, "__TEXT")) {
-                imagesz += seg->vmsize;
-                seg_text = (struct segment_command_64 *)lc;
-            } else if (!strcmp(seg->segname, "__LINKEDIT")) {
+        if (lc->cmd == LC_SEGMENT_64  || lc->cmd == LC_SEGMENT) {
+            struct segment_command_64 *seg_text = (struct segment_command_64 *)lc;
+//            printf("\n~~~~~segname: %s\n", seg_text->segname);
+            if (!strcmp(seg_text->segname, "__TEXT")) {
+                imagesz += seg_text->vmsize;
+                
+                
+            } else if (!strcmp(seg_text->segname, "__LINKEDIT")) {
                 seg_linkedit = (struct segment_command_64 *)lc;
             }
         } else if (lc->cmd == LC_SYMTAB) {
@@ -70,8 +72,9 @@
         } else if (lc->cmd == LC_LOAD_DYLIB) {
             
             struct dylib_command *mach_dylib_command = (struct dylib_command*)lc;
-            const char* dylibFilePath = (char *)mach_dylib_command + mach_dylib_command->dylib.name.offset;
-//            printf("dylibFilePath: %s\n\n\n", dylibFilePath);
+
+            const char* name = (char *)mach_dylib_command + mach_dylib_command->dylib.name.offset;
+            printf("mach_dylib_command->dylib.name: %s\n\n\n", name);
             
         }
 
