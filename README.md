@@ -31,3 +31,9 @@ This ended up getting me all the objc classes at the ned of hte day..
                 printf("%s - %s\n", imageName, clsname);
             }
         }
+
+
+
+
+This should be useful for figuring out how to hook and theme/mod a program or add new functionality to an older app.
+
