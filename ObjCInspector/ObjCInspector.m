@@ -8,6 +8,10 @@
 #import <Foundation/Foundation.h>
 #include <AppKit/AppKit.h>
 
+#include <dlfcn.h>
+#include <mach-o/dyld.h>
+#include <mach-o/nlist.h>
+
 #include <stdio.h>
 #import "ObjCInspector.h"
 
@@ -75,10 +79,39 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
         NSURL *furl = [[NSURL alloc] initWithString:filePathString];
         NSString *moduleNameString = [furl lastPathComponent];
 
-        MachO *mo = [[MachO alloc] initWithHeader:header sharedCacheBaseAddress:aii->sharedCacheBaseAddress filePathString:filePathString];
-        
+        MachO *mo = [[MachO alloc] initWithHeader:header filePathString:filePathString];
         if ([mo.symbols count] > 0) {
             [moduleToSymbols setValue:mo.symbols forKey:moduleNameString];
+        }
+        
+        if ([mo.dlopenFilepaths count] > 0) {
+            for (NSString *dlopenFilepath in mo.dlopenFilepaths) {
+                
+                void *dlHeader = dlopen(_dyld_get_image_name(i), RTLD_NOLOAD);
+                MachO *dlMo = [[MachO alloc] initWithHeader:dlHeader filePathString:dlopenFilepath];
+                
+                NSURL *dlFurl = [[NSURL alloc] initWithString:dlopenFilepath];
+                NSString *dlModuleNameString = [dlFurl lastPathComponent];
+                
+                if ([dlMo.symbols count] > 0) {
+                    [moduleToSymbols setValue:mo.symbols forKey:dlModuleNameString];
+                }
+                
+                
+//                void *dlOrigHeader = dlopen(_dyld_get_image_name(i), RTLD_NOW);
+//
+//                for (uint32_t i = _dyld_image_count(); i--;)
+//                {
+//                    void *dlNoLoad = dlopen(_dyld_get_image_name(i), RTLD_NOLOAD);
+//                    if (dlNoLoad == dlOrigHeader)
+//                        break;
+//                }
+                
+                
+//                void *dl = dlopen([dlopenFilepath UTF8String], RTLD_NOW);
+//                dlclose(dl);
+//                const mach_header_t *head = get_lib_head(so);
+            }
         }
         
     }

@@ -11,6 +11,10 @@
 
 #import "MachO.h"
 
+#include <dlfcn.h>
+#include <mach-o/dyld.h>
+#include <mach-o/nlist.h>
+
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -26,13 +30,16 @@
 #include <mach/task_info.h>
 #include <mach/thread_status.h>
 
+
+
 @implementation MachO
+
 
 - (void const *)pointerToImagePlusOffset:(uint32_t)location {
     return (uint8_t const *)header + location;
 }
 
-- (id)initWithHeader:(struct mach_header_64 *)header sharedCacheBaseAddress:(uintptr_t)sharedCacheBaseAddress filePathString:(NSString *)filePathString {
+- (id)initWithHeader:(struct mach_header_64 *)header filePathString:(NSString *)filePathString {
     self = [super init];
     if (!self) {
         return nil;
@@ -40,11 +47,8 @@
     
     self->header = header;
     self.symbols = [[NSMutableArray alloc] init];
+    self.dlopenFilepaths = [[NSMutableArray alloc] init];
 
-    struct dyld_cache_header *h = (struct dyld_cache_header *)sharedCacheBaseAddress;
-    struct shared_file_mapping_np *mapping = (void *)(h + 1);
-
-    char *shared_cache_base = sharedCacheBaseAddress;
 
     uint64_t *fSlide = NULL;
     uint8_t *fLinkEditBase = NULL;
@@ -75,7 +79,8 @@
 
             const char* name = (char *)mach_dylib_command + mach_dylib_command->dylib.name.offset;
             printf("mach_dylib_command->dylib.name: %s\n\n\n", name);
-            
+            NSString *dlopenFilepath = [NSString stringWithUTF8String:name];
+            [self.dlopenFilepaths addObject:dlopenFilepath];
         }
 
         lc = (struct load_command *)((char *)lc + lc->cmdsize);
