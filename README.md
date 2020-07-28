@@ -16,3 +16,5 @@ I will post the frida script to:
 https://github.com/bebrws/bebrws-frida-scripts
 
 as welll.
+
+It should be useful for figuring out how to hook and theme/mod a program or add new functionality to an older app.
