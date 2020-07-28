@@ -58,24 +58,19 @@
     struct segment_command_64 *seg_text = NULL;
 
     size_t imagesz = 0;
-    printf("before load\n");
     struct load_command *lc = (struct load_command *)(header + 1);
     for (uint32_t i = 0; i < header->ncmds; i++) {
         if (lc->cmd == LC_SEGMENT_64  || lc->cmd == LC_SEGMENT) {
-            struct segment_command_64 *seg_text = (struct segment_command_64 *)lc;
-            struct segment_command_64 *seg = (struct segment_command_64 *)lc;
-//            printf("\n~~~~~segname: %s\n", seg_text->segname);
+             struct segment_command_64 *seg = (struct segment_command_64 *)lc;
             if (!strcmp(seg->segname, "__TEXT")) {
+                seg_text = (struct segment_command_64 *)lc;
                 imagesz += seg->vmsize;
-                
-                
             } else if (!strcmp(seg->segname, "__LINKEDIT")) {
                 seg_linkedit = (struct segment_command_64 *)lc;
             }
         } else if (lc->cmd == LC_SYMTAB) {
             symtab = (struct symtab_command *)lc;
         }
-        printf("000 \n");
 //        else if (lc->cmd == LC_LOAD_DYLIB) {
 //
 //            struct dylib_command *mach_dylib_command = (struct dylib_command*)lc;
@@ -92,27 +87,22 @@
         fprintf(stderr, "The module was missing Load Commands\n");
         return NULL;
     }
-    printf("111 \n");
 
     intptr_t file_slide = ((intptr_t)seg_linkedit->vmaddr - (intptr_t)seg_text->vmaddr) - seg_linkedit->fileoff;
     intptr_t strings = (intptr_t)header + (symtab->stroff + file_slide);
 
     struct nlist_64 *sym = (struct nlist_64 *)((intptr_t)header + (symtab->symoff + file_slide));
-printf("222--- \n");
     for (uint32_t i = 0; i < symtab->nsyms; i++, sym++) {
-        printf("222-111 \n");
         if (!sym->n_value) continue;
-        printf("222-222 \n");
+        
         const char *symbolString = (const char *)strings + sym->n_un.n_strx;
-        printf("222-333 %p\n", symbolString);
         NSString *nsSysmbolString = [NSString stringWithUTF8String:symbolString];
-        printf("3333 \n");
         if ([nsSysmbolString containsString:@"_OBJC_CLASS_$__"]) {
-//            printf("symbolString: %s\n", symbolString);
+            // printf("symbolString: %s\n", symbolString);
             NSString *className = [nsSysmbolString substringFromIndex:15];
             [self.symbols addObject:className];
         } else {
-            printf("\nsSysmbolString: %s\n", [nsSysmbolString UTF8String]);
+            // printf("\nsSysmbolString: %s\n", [nsSysmbolString UTF8String]);
         }
         continue;
     }

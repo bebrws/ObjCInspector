@@ -76,15 +76,15 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
         struct mach_header_64 *header = (struct mach_header_64 *)info->imageLoadAddress;
 
         NSString *filePathString = [NSString stringWithUTF8String:info->imageFilePath];
-        printf("Original header: %s\n", [filePathString UTF8String]);
+        // printf("Original header: %s\n", [filePathString UTF8String]);
         NSURL *furl = [[NSURL alloc] initWithString:filePathString];
         NSString *moduleNameString = [furl lastPathComponent];
 
         MachO *mo = [[MachO alloc] initWithHeader:header filePathString:filePathString];
-        printf("mo symbols: %s\n", [[mo.symbols description] UTF8String]);
+        // printf("mo symbols: %s\n", [[mo.symbols description] UTF8String]);
         if ([mo.symbols count] > 0) {
             [moduleToSymbols setValue:mo.symbols forKey:moduleNameString];
-            printf("moduleToSumbols: %s - %s\n", [[moduleNameString description] UTF8String], [[mo.symbols description] UTF8String]);
+            // printf("moduleToSumbols: %s - %s\n", [[moduleNameString description] UTF8String], [[mo.symbols description] UTF8String]);
         }
         
         
@@ -106,21 +106,21 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
 //            }
 //        }
         
-        unsigned int imageCount=0;
-        const char **imageNames=objc_copyImageNames(&imageCount);
-        for (int i=0; i<imageCount; i++){
-            const char *imageName=imageNames[i];
-            const char **names = objc_copyClassNamesForImage((const char *)imageName,&count);
-            for (int i=0; i<count; i++){
-                const char *clsname=names[i];
-                
-                printf("%s - %s\n", imageName, clsname);
-            }
-        }
+//        unsigned int imageCount=0;
+//        const char **imageNames=objc_copyImageNames(&imageCount);
+//        for (int i=0; i<imageCount; i++){
+//            const char *imageName=imageNames[i];
+//            const char **names = objc_copyClassNamesForImage((const char *)imageName,&count);
+//            for (int i=0; i<count; i++){
+//                const char *clsname=names[i];
+//                
+//                printf("%s - %s\n", imageName, clsname);
+//            }
+//        }
         
     }
 
-    printf("\nmoduleToSymbols: %s\n", [[moduleToSymbols description] UTF8String]);
+    // printf("\nmoduleToSymbols: %s\n", [[moduleToSymbols description] UTF8String]);
     
     // Check the file insp.json for a file in form:
     // {
