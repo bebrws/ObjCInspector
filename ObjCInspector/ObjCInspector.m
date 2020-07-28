@@ -76,25 +76,31 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
         struct mach_header_64 *header = (struct mach_header_64 *)info->imageLoadAddress;
 
         NSString *filePathString = [NSString stringWithUTF8String:info->imageFilePath];
+        printf("Original header: %s\n", [filePathString UTF8String]);
         NSURL *furl = [[NSURL alloc] initWithString:filePathString];
         NSString *moduleNameString = [furl lastPathComponent];
 
         MachO *mo = [[MachO alloc] initWithHeader:header filePathString:filePathString];
+        printf("mo symbols: %s\n", [[mo.symbols description] UTF8String]);
         if ([mo.symbols count] > 0) {
             [moduleToSymbols setValue:mo.symbols forKey:moduleNameString];
+            printf("moduleToSumbols: %s - %s\n", [[moduleNameString description] UTF8String], [[mo.symbols description] UTF8String]);
         }
         
         if ([mo.dlopenFilepaths count] > 0) {
             for (NSString *dlopenFilepath in mo.dlopenFilepaths) {
                 
-                void *dlHeader = dlopen(_dyld_get_image_name(i), RTLD_NOLOAD);
+                void *dlHeader = dlopen([dlopenFilepath UTF8String], RTLD_NOLOAD);
                 MachO *dlMo = [[MachO alloc] initWithHeader:dlHeader filePathString:dlopenFilepath];
+                
+                printf("dlMo symbols: %s\n", [[dlMo.symbols description] UTF8String]);
                 
                 NSURL *dlFurl = [[NSURL alloc] initWithString:dlopenFilepath];
                 NSString *dlModuleNameString = [dlFurl lastPathComponent];
                 
                 if ([dlMo.symbols count] > 0) {
-                    [moduleToSymbols setValue:mo.symbols forKey:dlModuleNameString];
+                    [moduleToSymbols setValue:dlMo.symbols forKey:dlModuleNameString];
+                    printf("moduleToSumbolsDYLIB: %s - %s\n", [[dlModuleNameString description] UTF8String], [[dlMo.symbols description] UTF8String]);
                 }
                 
                 
@@ -116,6 +122,7 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
         
     }
 
+    printf("moduleToSymbols: %s\n", [[moduleToSymbols description] UTF8String]);
     
     // Check the file insp.json for a file in form:
     // {
