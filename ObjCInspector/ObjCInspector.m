@@ -106,17 +106,27 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
 //            }
 //        }
         
-//        unsigned int imageCount=0;
-//        const char **imageNames=objc_copyImageNames(&imageCount);
-//        for (int i=0; i<imageCount; i++){
-//            const char *imageName=imageNames[i];
-//            const char **names = objc_copyClassNamesForImage((const char *)imageName,&count);
-//            for (int i=0; i<count; i++){
-//                const char *clsname=names[i];
-//                
-//                printf("%s - %s\n", imageName, clsname);
-//            }
-//        }
+        unsigned int imageCount=0;
+        const char **imageNames=objc_copyImageNames(&imageCount);
+        for (int i=0; i<imageCount; i++){
+            const char *imageName=imageNames[i];
+            NSString *moduleNSString = [NSString stringWithUTF8String:imageName];
+            const char **names = objc_copyClassNamesForImage((const char *)imageName,&count);
+            NSMutableArray *classList = [[NSMutableArray alloc] init];
+            for (int i=0; i<count; i++){
+                const char *clsname=names[i];
+                [classList addObject:[NSString stringWithUTF8String:clsname]];
+                // printf("%s - %s\n", imageName, clsname);
+            }
+            if ([moduleToSymbols valueForKey:moduleNSString]) {
+                NSMutableArray *combined = [[NSMutableArray alloc] init];
+                [combined addObjectsFromArray:classList];
+                [combined addObjectsFromArray:[moduleToSymbols valueForKey:moduleNSString]];
+                [moduleToSymbols setValue:combined forKey:moduleNSString];
+            } else {
+                [moduleToSymbols setValue:classList forKey:moduleNSString];
+            }
+        }
         
     }
 
@@ -169,12 +179,17 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
                 }
 
                 if (wasResponderChain) {
-                    [classesStringsToHook addObjectsFromArray:curClassString];
+                    [classesStringsToHook addObject:curClassString];
                 }
 
             }
         }
     }
+    
+    NSSet *distinctSet = [NSSet setWithArray:classesStringsToHook];
+    
+    // This is taking an inmutable array and assigning it into a NSMutableAray
+    classesStringsToHook = [distinctSet allObjects];
     
     printf("classesStringsToHook: %s\n", [[classesStringsToHook description] UTF8String]);
     // Next hook all those classes in classesStringsToHook
