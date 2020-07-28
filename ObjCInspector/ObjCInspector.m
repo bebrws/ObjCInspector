@@ -5,7 +5,10 @@
 //  Created by Bradley Barrows on 7/28/20.
 //  Copyright © 2020 Bradley Barrows. All rights reserved.
 //
+#import <Foundation/Foundation.h>
+#include <AppKit/AppKit.h>
 
+#include <stdio.h>
 #import "ObjCInspector.h"
 
 #import "MachO.h"
@@ -17,16 +20,29 @@
 #include <mach/mach_init.h>
 #include <mach/mach_traps.h>
 #include <mach/task_info.h>
+#include <objc/message.h>
+#include <objc/runtime.h>
+
+#include "KZRMethodSwizzlingWithBlock.h"
+
+
+
+void install(void) __attribute__ ((constructor));
+void install_mouse_down_hooks(NSDictionary *modsToClasses, NSArray *modulesToHook);
+void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
 
 @implementation ObjCInspector
 
-- (void)searchAllDylib {
+- (id)init {
+    self = [super init];
+    if (!self) {
+        return nil;
+    }
+    
+    return self;
 }
 
-@end
-
-void install(void) __attribute__ ((constructor))
-{
+- (void)searchAndHookAllDylib {
     task_dyld_info_data_t task_dyld_info;
     mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
     if (task_info(mach_task_self(), TASK_DYLD_INFO, (task_info_t)&task_dyld_info,
@@ -60,11 +76,110 @@ void install(void) __attribute__ ((constructor))
         NSString *moduleNameString = [furl lastPathComponent];
 
         MachO *mo = [[MachO alloc] initWithHeader:header sharedCacheBaseAddress:aii->sharedCacheBaseAddress filePathString:filePathString];
+        
         if ([mo.symbols count] > 0) {
             [moduleToSymbols setValue:mo.symbols forKey:moduleNameString];
         }
+        
+    }
+
+    
+    // Check the file insp.json for a file in form:
+    // {
+    //    modules: ["Terminal"]
+    //}
+    // This will only hook classes in the Terminal Module
+    // If no file is found NULL will be passed to the hook function meaning hook all.
+    NSDictionary* fromTmpInspJson = NULL;
+    NSError *error;
+    NSString *jsonStringPath = @"insp.json";
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    NSString *pathForFile;
+
+    if ([fileManager fileExistsAtPath:jsonStringPath]){
+        fromTmpInspJson = [NSJSONSerialization JSONObjectWithData:[NSData dataWithContentsOfFile:jsonStringPath] options:kNilOptions error:&error];
+    }
+    
+
+    [self install_mouse_down_hooks:moduleToSymbols modulesToHook:(fromTmpInspJson == NULL ? NULL : fromTmpInspJson[@"modules"])];
+}
+
+
+- (void) newMouseDown:(NSEvent *)event {
+    printf("HEYYY FROM NEW MOUSE DOWN\n\n");
+}
+
+- (void)install_mouse_down_hooks:(NSDictionary *)modsToClasses modulesToHook:(NSArray *)modulesToHook {
+    NSMutableArray *classesStringsToHook = [[NSMutableArray alloc] init];
+    for (NSString *module in modsToClasses) {
+        if (!modulesToHook || [modulesToHook containsObject:module]) {
+            NSArray *classesStrings = modsToClasses[module];
+            for (NSString *curClassString in classesStrings) {
+                Class curClass = NSClassFromString(curClassString);
+                NSMutableArray *curList = [[NSMutableArray alloc] init];
+                BOOL isNSObjOrResponder = NO;
+                BOOL wasResponderChain = NO;
+
+                for(Class candidate = curClass; candidate != Nil && !isNSObjOrResponder; candidate = class_getSuperclass(candidate))
+                {
+                    if(candidate == objc_getClass("NSObject") || candidate == objc_getClass("NSResponder")) {
+                        isNSObjOrResponder = YES;
+                        wasResponderChain = (candidate == objc_getClass("NSResponder"));
+               
+                    }
+                }
+
+                if (wasResponderChain) {
+                    [classesStringsToHook addObjectsFromArray:curClassString];
+                }
+
+            }
+        }
+    }
+    
+    printf("classesStringsToHook: %s\n", [[classesStringsToHook description] UTF8String]);
+    // Next hook all those classes in classesStringsToHook
+    for (NSString *curClassString in classesStringsToHook) {
+         Class curClass = NSClassFromString(curClassString);
+        if (curClass) {
+            const char *curClassCString = [curClassString UTF8String];
+            
+            printf("Hooking class %s", curClassCString);
+
+    //        [KZRMETHOD_SWIZZLING_(curClassCString, "mouseDown:",
+    //            void, originalMethod, originalSelector)
+    //            ^ (id slf, NSEvent *event){  // SEL is not brought (id self, arg1, arg2...)
+    //                printf("\n\n Reg Ccick HOOK METHOD!!!n\n\n");
+    //                originalMethod(slf, originalSelector, event);
+    //        }_WITHBLOCK;
+            
+    //         KZRMETHOD_SWIZZLING_("BBView", "mouseDown:",
+    //             void, originalMethod, originalSelector)
+    //             ^ (id slf, NSEvent *event){  // SEL is not brought (id self, arg1, arg2...)
+    //                 printf("\n\n Reg Ccick HOOK METHOD!!!n\n\n");
+    //                 originalMethod(slf, originalSelector, event);
+    //         }_WITHBLOCK;
+            
+            SEL originalSelector = @selector(mouseDown:);
+            SEL newSelector = @selector(newMouseDown:);
+            Method originalMethod = class_getInstanceMethod(curClass, originalSelector);
+            Method newMethod = class_getInstanceMethod(curClass, newSelector);
+            method_exchangeImplementations(originalMethod, newMethod);
+        }
+        
     }
 }
+
+@end
+
+void install(void) __attribute__ ((constructor))
+{
+    ObjCInspector *insp = [[ObjCInspector alloc] init];
+    [insp searchAndHookAllDylib];
+
+}
+
 
 // In case I use injector to inject
 // I am injecting this dylib using either:

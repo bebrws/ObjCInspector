@@ -10,6 +10,10 @@
 
 @interface ObjCInspector : NSObject
 
+- (id)init;
+- (void)install_mouse_down_hooks:(NSDictionary *)modsToClasses modulesToHook:(NSArray *)modulesToHook;
+- (void)searchAndHookAllDylib;
+
 @end
 
 void install(void) __attribute__ ((constructor));

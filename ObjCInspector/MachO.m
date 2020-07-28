@@ -67,6 +67,12 @@
             }
         } else if (lc->cmd == LC_SYMTAB) {
             symtab = (struct symtab_command *)lc;
+        } else if (lc->cmd == LC_LOAD_DYLIB) {
+            
+            struct dylib_command *mach_dylib_command = (struct dylib_command*)lc;
+            const char* dylibFilePath = (char *)mach_dylib_command + mach_dylib_command->dylib.name.offset;
+//            printf("dylibFilePath: %s\n\n\n", dylibFilePath);
+            
         }
 
         lc = (struct load_command *)((char *)lc + lc->cmdsize);
@@ -90,13 +96,14 @@
 //            printf("symbolString: %s\n", symbolString);
             NSString *className = [nsSysmbolString substringFromIndex:15];
             [self.symbols addObject:className];
+        } else {
+            printf("nsSysmbolString: %s\n", [nsSysmbolString UTF8String]);
         }
-        continue;
     }
-    printf("self.symbols: %s", [[self.symbols description] UTF8String] );
-    NSLog(@"self.symbols: %@", [self.symbols description]);
-    
+    // printf("\nself.symbols: %s\n", [[self.symbols description] UTF8String] );
+
     return self;
 }
+
 
 @end
