@@ -47,7 +47,7 @@
     
     self->header = header;
     self.symbols = [[NSMutableArray alloc] init];
-    self.dlopenFilepaths = [[NSMutableArray alloc] init];
+//    self.dlopenFilepaths = [[NSMutableArray alloc] init];
 
 
     uint64_t *fSlide = NULL;
@@ -58,17 +58,18 @@
     struct segment_command_64 *seg_text = NULL;
 
     size_t imagesz = 0;
-
+    printf("before load\n");
     struct load_command *lc = (struct load_command *)(header + 1);
     for (uint32_t i = 0; i < header->ncmds; i++) {
-        if (lc->cmd == LC_SEGMENT_64) { //  || lc->cmd == LC_SEGMENT) {
-            seg_text = (struct segment_command_64 *)lc;
+        if (lc->cmd == LC_SEGMENT_64  || lc->cmd == LC_SEGMENT) {
+            struct segment_command_64 *seg_text = (struct segment_command_64 *)lc;
+            struct segment_command_64 *seg = (struct segment_command_64 *)lc;
 //            printf("\n~~~~~segname: %s\n", seg_text->segname);
-            if (!strcmp(seg_text->segname, "__TEXT")) {
-                imagesz += seg_text->vmsize;
+            if (!strcmp(seg->segname, "__TEXT")) {
+                imagesz += seg->vmsize;
                 
                 
-            } else if (!strcmp(seg_text->segname, "__LINKEDIT")) {
+            } else if (!strcmp(seg->segname, "__LINKEDIT")) {
                 seg_linkedit = (struct segment_command_64 *)lc;
             }
         } else if (lc->cmd == LC_SYMTAB) {
@@ -111,7 +112,7 @@ printf("222--- \n");
             NSString *className = [nsSysmbolString substringFromIndex:15];
             [self.symbols addObject:className];
         } else {
-            printf("nsSysmbolString: %s\n", [nsSysmbolString UTF8String]);
+            printf("\nsSysmbolString: %s\n", [nsSysmbolString UTF8String]);
         }
         continue;
     }

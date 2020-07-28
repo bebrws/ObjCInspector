@@ -87,42 +87,40 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
             printf("moduleToSumbols: %s - %s\n", [[moduleNameString description] UTF8String], [[mo.symbols description] UTF8String]);
         }
         
-        if ([mo.dlopenFilepaths count] > 0) {
-            for (NSString *dlopenFilepath in mo.dlopenFilepaths) {
-                
-                void *dlHeader = dlopen([dlopenFilepath UTF8String], RTLD_NOLOAD);
-                MachO *dlMo = [[MachO alloc] initWithHeader:dlHeader filePathString:dlopenFilepath];
-                
-                printf("dlMo symbols: %s\n", [[dlMo.symbols description] UTF8String]);
-                
-                NSURL *dlFurl = [[NSURL alloc] initWithString:dlopenFilepath];
-                NSString *dlModuleNameString = [dlFurl lastPathComponent];
-                
-                if ([dlMo.symbols count] > 0) {
-                    [moduleToSymbols setValue:dlMo.symbols forKey:dlModuleNameString];
-                    printf("moduleToSumbolsDYLIB: %s - %s\n", [[dlModuleNameString description] UTF8String], [[dlMo.symbols description] UTF8String]);
-                }
-                
-                
-//                void *dlOrigHeader = dlopen(_dyld_get_image_name(i), RTLD_NOW);
+        
+//        if ([mo.dlopenFilepaths count] > 0) {
+//            for (NSString *dlopenFilepath in mo.dlopenFilepaths) {
 //
-//                for (uint32_t i = _dyld_image_count(); i--;)
-//                {
-//                    void *dlNoLoad = dlopen(_dyld_get_image_name(i), RTLD_NOLOAD);
-//                    if (dlNoLoad == dlOrigHeader)
-//                        break;
+//                void *dlHeader = dlopen([dlopenFilepath UTF8String], RTLD_NOLOAD);
+//                MachO *dlMo = [[MachO alloc] initWithHeader:dlHeader filePathString:dlopenFilepath];
+//
+//                printf("dlMo symbols: %s\n", [[dlMo.symbols description] UTF8String]);
+//
+//                NSURL *dlFurl = [[NSURL alloc] initWithString:dlopenFilepath];
+//                NSString *dlModuleNameString = [dlFurl lastPathComponent];
+//
+//                if ([dlMo.symbols count] > 0) {
+//                    [moduleToSymbols setValue:dlMo.symbols forKey:dlModuleNameString];
+//                    printf("moduleToSumbolsDYLIB: %s - %s\n", [[dlModuleNameString description] UTF8String], [[dlMo.symbols description] UTF8String]);
 //                }
+//            }
+//        }
+        
+        unsigned int imageCount=0;
+        const char **imageNames=objc_copyImageNames(&imageCount);
+        for (int i=0; i<imageCount; i++){
+            const char *imageName=imageNames[i];
+            const char **names = objc_copyClassNamesForImage((const char *)imageName,&count);
+            for (int i=0; i<count; i++){
+                const char *clsname=names[i];
                 
-                
-//                void *dl = dlopen([dlopenFilepath UTF8String], RTLD_NOW);
-//                dlclose(dl);
-//                const mach_header_t *head = get_lib_head(so);
+                printf("%s - %s\n", imageName, clsname);
             }
         }
         
     }
 
-    printf("moduleToSymbols: %s\n", [[moduleToSymbols description] UTF8String]);
+    printf("\nmoduleToSymbols: %s\n", [[moduleToSymbols description] UTF8String]);
     
     // Check the file insp.json for a file in form:
     // {
@@ -185,7 +183,7 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
         if (curClass) {
             const char *curClassCString = [curClassString UTF8String];
             
-            printf("Hooking class %s", curClassCString);
+            printf("Hooking class %s\n", curClassCString);
 
     //        [KZRMETHOD_SWIZZLING_(curClassCString, "mouseDown:",
     //            void, originalMethod, originalSelector)

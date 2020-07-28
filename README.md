@@ -16,3 +16,18 @@ I will post the frida script to:
 https://github.com/bebrws/bebrws-frida-scripts
 
 as welll.
+
+
+This ended up getting me all the objc classes at the ned of hte day..
+
+        unsigned int imageCount=0;
+        const char **imageNames=objc_copyImageNames(&imageCount);
+        for (int i=0; i<imageCount; i++){
+            const char *imageName=imageNames[i];
+            const char **names = objc_copyClassNamesForImage((const char *)imageName,&count);
+            for (int i=0; i<count; i++){
+                const char *clsname=names[i];
+                
+                printf("%s - %s\n", imageName, clsname);
+            }
+        }
