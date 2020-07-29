@@ -29,6 +29,20 @@
 
 #include "KZRMethodSwizzlingWithBlock.h"
 
+#include "JGMethodSwizzler.h"
+
+#import <objc/objc-class.h>
+#import <objc/objc.h>
+#import <objc/objc-load.h>
+#import <objc/objc-class.h>
+#import <objc/NSObjCRuntime.h>
+#import <objc/NSObject.h>
+#import <objc/message.h>
+#import <objc/objc-api.h>
+#import <objc/objc-auto.h>
+#import <objc/runtime.h>
+
+
 
 
 void install(void) __attribute__ ((constructor));
@@ -171,7 +185,7 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
 
                 for(Class candidate = curClass; candidate != Nil && !isNSObjOrResponder; candidate = class_getSuperclass(candidate))
                 {
-                    if(candidate == objc_getClass("NSObject") || candidate == objc_getClass("NSResponder")) {
+                    if(candidate == objc_getClass("NSObject") || candidate == objc_getClass("NSViewController") || candidate == objc_getClass("NSResponder")) {
                         isNSObjOrResponder = YES;
                         wasResponderChain = (candidate == objc_getClass("NSResponder"));
                
@@ -200,6 +214,20 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
             
             printf("Hooking class %s\n", curClassCString);
 
+            
+            Class clazz = NSClassFromString(curClassString);
+//            BOOL swizzled = MethodSwizzle(clazz, @selector(mouseDown:), @selector(hooked:));
+//            if (!swizzled) printf("error setting up swizzle\n\n");
+//            ClassicMethodSwizzl(clazz, @selector(mouseDown:), @selector(hooked:));
+            
+            [clazz swizzleInstanceMethod:@selector(mouseDown:) withReplacement:JGMethodReplacementProviderBlock {
+                //return a replacement block
+                return JGMethodReplacement(void, NSObject *, NSEvent *e) {
+                    printf("SWIZZLED IT\n");
+                    JGOriginalImplementation(void, e);
+                };
+            }];
+            
     //        [KZRMETHOD_SWIZZLING_(curClassCString, "mouseDown:",
     //            void, originalMethod, originalSelector)
     //            ^ (id slf, NSEvent *event){  // SEL is not brought (id self, arg1, arg2...)
@@ -214,15 +242,20 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
     //                 originalMethod(slf, originalSelector, event);
     //         }_WITHBLOCK;
             
-            SEL originalSelector = @selector(mouseDown:);
-            SEL newSelector = @selector(newMouseDown:);
-            Method originalMethod = class_getInstanceMethod(curClass, originalSelector);
-            Method newMethod = class_getInstanceMethod(curClass, newSelector);
-            method_exchangeImplementations(originalMethod, newMethod);
+//            SEL originalSelector = @selector(mouseDown:);
+//            SEL newSelector = @selector(newMouseDown:);
+//            Method originalMethod = class_getInstanceMethod(curClass, originalSelector);
+//            Method newMethod = class_getInstanceMethod(curClass, newSelector);
+//            method_exchangeImplementations(originalMethod, newMethod);
         }
         
     }
 }
+
+- (void)hooked:(NSEvent *)e {
+    printf("HOOOKKKOKOKED \nHOOKOE\n");
+}
+
 
 @end
 
