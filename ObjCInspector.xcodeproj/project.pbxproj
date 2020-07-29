@@ -11,11 +11,8 @@
 		B157806024D01A0600564BCE /* ObjCInspector.m in Sources */ = {isa = PBXBuildFile; fileRef = B157805F24D01A0600564BCE /* ObjCInspector.m */; };
 		B157806824D01AA900564BCE /* MachO.h in Headers */ = {isa = PBXBuildFile; fileRef = B157806624D01AA900564BCE /* MachO.h */; };
 		B157806924D01AA900564BCE /* MachO.m in Sources */ = {isa = PBXBuildFile; fileRef = B157806724D01AA900564BCE /* MachO.m */; };
-		B1A635AA24D0F2D400BC667A /* JRSwizzle.m in Sources */ = {isa = PBXBuildFile; fileRef = B1A635A824D0F2D400BC667A /* JRSwizzle.m */; };
-		B1A635AB24D0F2D400BC667A /* JRSwizzle.h in Headers */ = {isa = PBXBuildFile; fileRef = B1A635A924D0F2D400BC667A /* JRSwizzle.h */; };
 		B1A635B324D0F5C000BC667A /* JGMethodSwizzler.h in Headers */ = {isa = PBXBuildFile; fileRef = B1A635B124D0F5C000BC667A /* JGMethodSwizzler.h */; };
 		B1A635B424D0F5C000BC667A /* JGMethodSwizzler.m in Sources */ = {isa = PBXBuildFile; fileRef = B1A635B224D0F5C000BC667A /* JGMethodSwizzler.m */; };
-		B1B5853124D0AD1C00FDA462 /* KZRMethodSwizzlingWithBlock.h in Headers */ = {isa = PBXBuildFile; fileRef = B1B5853024D0AD1C00FDA462 /* KZRMethodSwizzlingWithBlock.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,12 +21,9 @@
 		B157805F24D01A0600564BCE /* ObjCInspector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCInspector.m; sourceTree = "<group>"; };
 		B157806624D01AA900564BCE /* MachO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MachO.h; sourceTree = "<group>"; };
 		B157806724D01AA900564BCE /* MachO.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MachO.m; sourceTree = "<group>"; };
-		B1A635A824D0F2D400BC667A /* JRSwizzle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JRSwizzle.m; sourceTree = "<group>"; };
-		B1A635A924D0F2D400BC667A /* JRSwizzle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JRSwizzle.h; sourceTree = "<group>"; };
 		B1A635B124D0F5C000BC667A /* JGMethodSwizzler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JGMethodSwizzler.h; sourceTree = "<group>"; };
 		B1A635B224D0F5C000BC667A /* JGMethodSwizzler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JGMethodSwizzler.m; sourceTree = "<group>"; };
 		B1B5852F24D0A72D00FDA462 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		B1B5853024D0AD1C00FDA462 /* KZRMethodSwizzlingWithBlock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KZRMethodSwizzlingWithBlock.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,11 +57,8 @@
 		B157805C24D01A0600564BCE /* ObjCInspector */ = {
 			isa = PBXGroup;
 			children = (
-				B1B5853024D0AD1C00FDA462 /* KZRMethodSwizzlingWithBlock.h */,
 				B1A635B124D0F5C000BC667A /* JGMethodSwizzler.h */,
 				B1A635B224D0F5C000BC667A /* JGMethodSwizzler.m */,
-				B1A635A924D0F2D400BC667A /* JRSwizzle.h */,
-				B1A635A824D0F2D400BC667A /* JRSwizzle.m */,
 				B157805D24D01A0600564BCE /* ObjCInspector.h */,
 				B157805F24D01A0600564BCE /* ObjCInspector.m */,
 				B157806624D01AA900564BCE /* MachO.h */,
@@ -85,8 +76,6 @@
 			files = (
 				B1A635B324D0F5C000BC667A /* JGMethodSwizzler.h in Headers */,
 				B157805E24D01A0600564BCE /* ObjCInspector.h in Headers */,
-				B1A635AB24D0F2D400BC667A /* JRSwizzle.h in Headers */,
-				B1B5853124D0AD1C00FDA462 /* KZRMethodSwizzlingWithBlock.h in Headers */,
 				B157806824D01AA900564BCE /* MachO.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -150,7 +139,6 @@
 			files = (
 				B157806924D01AA900564BCE /* MachO.m in Sources */,
 				B1A635B424D0F5C000BC667A /* JGMethodSwizzler.m in Sources */,
-				B1A635AA24D0F2D400BC667A /* JRSwizzle.m in Sources */,
 				B157806024D01A0600564BCE /* ObjCInspector.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

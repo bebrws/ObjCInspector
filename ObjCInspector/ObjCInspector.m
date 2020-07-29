@@ -27,7 +27,6 @@
 #include <objc/message.h>
 #include <objc/runtime.h>
 
-#include "KZRMethodSwizzlingWithBlock.h"
 
 #include "JGMethodSwizzler.h"
 
@@ -223,30 +222,49 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
             [clazz swizzleInstanceMethod:@selector(mouseDown:) withReplacement:JGMethodReplacementProviderBlock {
                 //return a replacement block
                 return JGMethodReplacement(void, NSObject *, NSEvent *e) {
-                    printf("SWIZZLED IT\n");
+                    printf("%s\n", [NSStringFromClass(clazz) UTF8String]);
+                    
+                    unsigned int methodCount;
+                    Method *mlist=class_copyMethodList(curClass, &methodCount);
+                    for (unsigned x=0;x<methodCount;x++){
+                        Method currentMethod = mlist[x];
+                        SEL sele= method_getName(currentMethod);
+                        unsigned methodArgs=method_getNumberOfArguments(currentMethod);
+                        char * returnType=method_copyReturnType(currentMethod);
+                        const char *selectorName=sel_getName(sele);
+                        NSString *returnTypeSameAsProperty=nil;
+                        
+
+                        NSString *SelectorNameNS=[NSString stringWithCString:selectorName encoding:NSUTF8StringEncoding] ;
+                        if ([SelectorNameNS rangeOfString:@"."].location==0){ //.cxx.destruct etc
+                            continue;
+                        }
+                        
+                        printf("  method: %s\n", [[NSString stringWithFormat:@"%@", SelectorNameNS] UTF8String]);
+                    }
+                    
+                    
+                    unsigned int ivarOutCount;
+                    Ivar * ivarArray=class_copyIvarList(curClass, &ivarOutCount);
+                    if (ivarOutCount>0){
+                        for (unsigned x=0;x<ivarOutCount;x++){
+                            Ivar currentIvar=ivarArray[x];
+                            const char * ivarName=ivar_getName(currentIvar);
+
+                            NSString *ivarNameNS=[NSString stringWithCString:ivarName encoding:NSUTF8StringEncoding];
+                            const char * ivarType=ivar_getTypeEncoding(currentIvar);
+
+                            NSString *ivarTypeString=[NSString stringWithCString:ivarType encoding:NSUTF8StringEncoding];
+                            
+                            printf("  ivar: %s\n", [[NSString stringWithFormat:@"%@ %@", ivarNameNS, ivarTypeString] UTF8String]);
+                        
+                        }
+                    }
+                    
+                    
                     JGOriginalImplementation(void, e);
                 };
             }];
-            
-    //        [KZRMETHOD_SWIZZLING_(curClassCString, "mouseDown:",
-    //            void, originalMethod, originalSelector)
-    //            ^ (id slf, NSEvent *event){  // SEL is not brought (id self, arg1, arg2...)
-    //                printf("\n\n Reg Ccick HOOK METHOD!!!n\n\n");
-    //                originalMethod(slf, originalSelector, event);
-    //        }_WITHBLOCK;
-            
-    //         KZRMETHOD_SWIZZLING_("BBView", "mouseDown:",
-    //             void, originalMethod, originalSelector)
-    //             ^ (id slf, NSEvent *event){  // SEL is not brought (id self, arg1, arg2...)
-    //                 printf("\n\n Reg Ccick HOOK METHOD!!!n\n\n");
-    //                 originalMethod(slf, originalSelector, event);
-    //         }_WITHBLOCK;
-            
-//            SEL originalSelector = @selector(mouseDown:);
-//            SEL newSelector = @selector(newMouseDown:);
-//            Method originalMethod = class_getInstanceMethod(curClass, originalSelector);
-//            Method newMethod = class_getInstanceMethod(curClass, newSelector);
-//            method_exchangeImplementations(originalMethod, newMethod);
         }
         
     }
