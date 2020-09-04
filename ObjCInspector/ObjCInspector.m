@@ -43,6 +43,34 @@
 
 
 
+// NSView+viewRecursion.m
+@implementation NSView (viewRecursion)
+
+
+- (void)printAllSubViewsLevel:(int)level
+{
+    NSMutableString *spaces = [NSMutableString stringWithString:@""];
+    for (int i = 0; i < level; i++) {
+        [spaces appendString:@"  "];
+    }
+    NSLog(@"%@%@", spaces, [self className]);
+   NSMutableArray *arr=[[NSMutableArray alloc] init];
+   [arr addObject:self];
+   for (NSView *subview in self.subviews)
+   {
+       [subview printAllSubViewsLevel:level + 1];
+   }
+}
+
+- (void)printAllSubViews {
+    [self printAllSubViewsLevel:0];
+}
+
+@end
+
+
+
+
 
 void install(void) __attribute__ ((constructor));
 void install_mouse_down_hooks(NSDictionary *modsToClasses, NSArray *modulesToHook);
@@ -60,6 +88,7 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
 }
 
 - (void)searchAndHookAllDylib {
+    printf("Searching all loaded modules\n");
     task_dyld_info_data_t task_dyld_info;
     mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
     if (task_info(mach_task_self(), TASK_DYLD_INFO, (task_info_t)&task_dyld_info,
@@ -143,7 +172,7 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
         
     }
 
-    // printf("\nmoduleToSymbols: %s\n", [[moduleToSymbols description] UTF8String]);
+//     printf("\nmoduleToSymbols: %s\n", [[moduleToSymbols description] UTF8String]);
     
     // Check the file insp.json for a file in form:
     // {
@@ -162,7 +191,7 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
         fromTmpInspJson = [NSJSONSerialization JSONObjectWithData:[NSData dataWithContentsOfFile:jsonStringPath] options:kNilOptions error:&error];
     }
     
-
+    printf("Installing mouse down hooks");
     [self install_mouse_down_hooks:moduleToSymbols modulesToHook:(fromTmpInspJson == NULL ? NULL : fromTmpInspJson[@"modules"])];
 }
 
@@ -221,8 +250,11 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
             
             [clazz swizzleInstanceMethod:@selector(mouseDown:) withReplacement:JGMethodReplacementProviderBlock {
                 //return a replacement block
-                return JGMethodReplacement(void, NSObject *, NSEvent *e) {
-                    printf("%s\n", [NSStringFromClass(clazz) UTF8String]);
+                return JGMethodReplacement(void, NSView *, NSEvent *e) {
+                    printf("%s view tree:\n", [NSStringFromClass(clazz) UTF8String]);
+                    
+                    [self printAllSubViews];
+                    printf("\n");
                     
                     unsigned int methodCount;
                     Method *mlist=class_copyMethodList(curClass, &methodCount);
@@ -279,11 +311,16 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
 
 void install(void) __attribute__ ((constructor))
 {
+    printf("ObjCInspector dylib loaded\n");
     ObjCInspector *insp = [[ObjCInspector alloc] init];
     [insp searchAndHookAllDylib];
-
 }
 
+// I use this function as an entry point when using Frida to inject the dylib
+void frinject(const char* arg) {
+    // Argument is not used
+    install();
+}
 
 // In case I use injector to inject
 // I am injecting this dylib using either:
@@ -295,3 +332,10 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err)
 {
     install();
 }
+
+// NSView+viewRecursion.h
+@interface NSView (viewRecursion)
+- (void)printAllSubViewsLevel:(int)level;
+- (void)printAllSubViews;
+@end
+
