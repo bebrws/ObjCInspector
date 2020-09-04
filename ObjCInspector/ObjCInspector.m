@@ -147,29 +147,29 @@ void payload_entry(int argc, char **argv, FILE *in, FILE *out, FILE *err);
 //                }
 //            }
 //        }
-        
-        unsigned int imageCount=0;
-        const char **imageNames=objc_copyImageNames(&imageCount);
-        for (int i=0; i<imageCount; i++){
-            const char *imageName=imageNames[i];
-            NSString *moduleNSString = [NSString stringWithUTF8String:imageName];
-            const char **names = objc_copyClassNamesForImage((const char *)imageName,&count);
-            NSMutableArray *classList = [[NSMutableArray alloc] init];
-            for (int i=0; i<count; i++){
-                const char *clsname=names[i];
-                [classList addObject:[NSString stringWithUTF8String:clsname]];
-                // printf("%s - %s\n", imageName, clsname);
-            }
-            if ([moduleToSymbols valueForKey:moduleNSString]) {
-                NSMutableArray *combined = [[NSMutableArray alloc] init];
-                [combined addObjectsFromArray:classList];
-                [combined addObjectsFromArray:[moduleToSymbols valueForKey:moduleNSString]];
-                [moduleToSymbols setValue:combined forKey:moduleNSString];
-            } else {
-                [moduleToSymbols setValue:classList forKey:moduleNSString];
-            }
+
+    }
+    
+    unsigned int imageCount=0;
+    const char **imageNames=objc_copyImageNames(&imageCount);
+    for (int i=0; i<imageCount; i++){
+        const char *imageName=imageNames[i];
+        NSString *moduleNSString = [NSString stringWithUTF8String:imageName];
+        const char **names = objc_copyClassNamesForImage((const char *)imageName,&count);
+        NSMutableArray *classList = [[NSMutableArray alloc] init];
+        for (int i=0; i<count; i++){
+            const char *clsname=names[i];
+            [classList addObject:[NSString stringWithUTF8String:clsname]];
+            // printf("%s - %s\n", imageName, clsname);
         }
-        
+        if ([moduleToSymbols valueForKey:moduleNSString]) {
+            NSMutableArray *combined = [[NSMutableArray alloc] init];
+            [combined addObjectsFromArray:classList];
+            [combined addObjectsFromArray:[moduleToSymbols valueForKey:moduleNSString]];
+            [moduleToSymbols setValue:combined forKey:moduleNSString];
+        } else {
+            [moduleToSymbols setValue:classList forKey:moduleNSString];
+        }
     }
 
 //     printf("\nmoduleToSymbols: %s\n", [[moduleToSymbols description] UTF8String]);
